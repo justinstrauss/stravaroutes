@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+  {% block bodycontent %}
+
+<form class="pure-form pure-form-aligned" method="POST">
+    <fieldset>
+
+        <div class="pure-control-group">
+            <label for="origin">Origin Address</label>
+            <input id="origin" type="text" placeholder="Type origin here..." name="origin">
+        </div>
+
+        <div class="pure-control-group">
+            <label for="destination">Destination Address</label>
+            <input id="destination" type="text" placeholder="Type destination here..." name="destination">
+        </div>
+
+        <div class="pure-controls">
+
+            <button type="submit" name="b" value="Search" class="pure-button pure-button-primary">Search</button>
+
+        </div>
+    </fieldset>
+</form>
+
+  {% endblock bodycontent %}

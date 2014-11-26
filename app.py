@@ -1,54 +1,64 @@
+# Justin Strauss
+# Software Development Period 7
+# Final Project
+
 from flask import Flask, render_template, request, redirect, session, url_for, flash
-import urllib2, json, urllib, math, time, string
+import json, requests
 
 app = Flask(__name__)
 
 secrets = json.load(open("secrets.json"))
 
 @app.route("/")
+@app.route('/index')
 def index():
-    if 'user' not in session:
-        return redirect("/login")
-    return "<h1>Welcome %s</h1>"%(session['user'])
-
-@app.route("/logout")
-def logout():
-    session.pop('user',None)
-    return redirect('/')
+    return render_template('index.html')
 
 @app.route("/login")
 def login():
-    url="https://www.strava.com/oauth/authorize"
-    data = urllib.urlencode(secrets['request_redirect'])
-    req = urllib2.Request(url+"?"+data)
-    response = urllib2.urlopen(req)
-    result = response.read()
-    return result
+    return redirect("https://www.strava.com/oauth/authorize?client_id={0}" \
+           "&response_type=code&redirect_uri={1}&scope={2}" \
+           "&approval_prompt=auto".format(secrets['client_id'], secrets['redirect_uri'], "view_private,write"))
 
 @app.route("/oauth2callback")
 def oauth2callback():
-    if request.args.has_key('error'):
-        return "ERROR"
+    if 'access_token' not in session:
+        if request.args.has_key('error'):
+            return "ERROR"
+        code = request.args.get('code')
+        session['access_token'] = get_token(code)
+        return "Authorization is completed"
+    return "You authorized already"
 
-    url = "https://www.strava.com/oauth/token"
-    code = request.args.get('code')
-    values = secrets['request_token']
-    values['code'] = code
+# @app.route("/strava_get_userdata")
+# def get_friend():
+#     headers = {"Authorization" : "Bearer " + AppData.access_token}
+#     response_json = requests.get("https://www.strava.com/api/v3/athlete", headers=headers).json()
+#     if "errors" in response_json:
+#         return response_json["message"]
+#     return ("User data:<br><br>Firstname: " + response_json["firstname"] +
+#             "<br>Lastname:" + response_json["lastname"] +
+#             "<br>Friends:" + str(response_json["friend_count"]) +
+#             "<br>Followers:" + str(response_json["follower_count"]))
 
-    data = urllib.urlencode(values)
-    req = urllib2.Request(url,data)
-    response = urllib2.urlopen(req)
-    rawresult = response.read()
-    d = json.loads(rawresult)
-    url = "https://www.strava.com/api/v3/athlete?access_token=%s"%(d['access_token'])
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    rawresult = response.read()
-    d = json.loads(rawresult)
-    session['user']=d['email']
-    return redirect("/")
+@app.route("/logout")
+def logout():
+    if session['access_token']!=None:
+        post_data = {"access_token": session['access_token']}
+        requests.post("https://www.strava.com/oauth/deauthorize", data=post_data)
+        session.pop('access_token', None)
+        return "Goodbye"
+    return "Error: you not authorized yet"
 
-if __name__ == '__main__':
-    	app.secret_key = "don't store this on github"
-	app.debug = True
-	app.run(host='0.0.0.0',port=4242)
+def get_token(code):
+    post_data = {"client_id": secrets['client_id'],
+                 "client_secret": secrets['client_secret'],
+                 "code": code}
+    response = requests.post("https://www.strava.com/oauth/token", data=post_data)
+    token_json = response.json()
+    token = token_json["access_token"] if "access_token" in token_json.keys() else ""
+    return token
+
+if __name__ == "__main__":
+    app.secret_key = "don't store this on github"
+    app.run(debug=True, port=4242)

@@ -1,0 +1,48 @@
+<!doctype html>
+<head>
+	<link rel="stylesheet" href="/static/extras.css">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/grids-responsive-min.css">
+</head>
+
+
+<div class="pure-menu pure-menu-open pure-menu-horizontal">
+    <a href="/" class="pure-menu-heading">{% if session['access_token']==None %} Final Project {% else %} Welcome {{session['access_token']}} {% endif %}</a>
+
+    <ul>
+        <li><a href="/">Home</a></li>
+        {% if session['access_token']==None %}
+        <li><a href="/login">Login</a></li>
+        {% else %}
+        <li><a href="/logout">Logout</a></li>
+        {% endif %}
+        <li><a href="/about">About</a></li>
+    </ul>
+</div>
+
+<hr> <br>
+
+<div class="pure-g">
+    <div class="pure-u-1-5"></div>
+    <div class="pure-u-3-5">
+
+<center>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class=flashes>
+    {% for message in messages %}
+    {{ message }} <br>
+    {% endfor %}
+    <br>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block bodycontent %}
+	This is placeholder content in the base template.
+{% endblock bodycontent %}
+
+ </center>
+<hr>
+<br>
+</div>
